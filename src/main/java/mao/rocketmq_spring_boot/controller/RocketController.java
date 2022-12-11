@@ -1,5 +1,6 @@
 package mao.rocketmq_spring_boot.controller;
 
+import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
@@ -115,7 +116,50 @@ public class RocketController
         log.info("开始发送消息");
         Message message = new Message();
         message.setBody(("同步消息:" + data).getBytes(StandardCharsets.UTF_8));
-        rocketMQTemplate.syncSendOrderly("test_topic", message, "1");
+        SendResult sendResult = rocketMQTemplate.syncSendOrderly("test_topic", message, "1");
+        log.info("发送结果：" + sendResult);
+        return data;
+    }
+
+    /**
+     * 发送异步消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save6/{data}")
+    public String save6(@PathVariable String data)
+    {
+        log.info("开始发送异步消息");
+        rocketMQTemplate.asyncSend("test_group", data, new SendCallback()
+        {
+            @Override
+            public void onSuccess(SendResult sendResult)
+            {
+                log.info("异步消息发送成功：" + sendResult);
+            }
+
+            @Override
+            public void onException(Throwable throwable)
+            {
+                log.error("异步消息发送失败：" + throwable);
+            }
+        });
+        return data;
+    }
+
+
+    /**
+     * 发送单向消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save7/{data}")
+    public String save7(@PathVariable String data)
+    {
+        log.info("开始发送单向消息");
+        rocketMQTemplate.sendOneWay("test_topic", data);
         return data;
     }
 }
